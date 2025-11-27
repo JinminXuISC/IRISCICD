@@ -20,12 +20,4 @@ jobs:
     IRIS_PASS: sys
   run: |
     @"
-Set sc=\$SYSTEM.Security.Login("$env:IRIS_USER","$env:IRIS_PASS")
-If 'sc { write "LOGIN FAILED",!  Halt }
-
-Do ^installer.install
-
-Halt
-"@ | Set-Content C:\tmp\deploy.osc -Encoding ASCII
-
-    iris terminal DEV -U DEV < C:\tmp\deploy.osc
+# write a bash script to load the classfile under /src

@@ -1,0 +1,31 @@
+name: IRIS-CICD
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy via IRIS install.mac
+  shell: powershell
+  env:
+    IRIS_USER: _system  
+    IRIS_PASS: sys
+  run: |
+    @"
+Set sc=\$SYSTEM.Security.Login("$env:IRIS_USER","$env:IRIS_PASS")
+If 'sc { write "LOGIN FAILED",!  Halt }
+
+Do ^installer.install
+
+Halt
+"@ | Set-Content C:\tmp\deploy.osc -Encoding ASCII
+
+    iris terminal DEV -U DEV < C:\tmp\deploy.osc

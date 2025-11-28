@@ -52,8 +52,16 @@ jobs:
       - name: Execute IRIS deployment
         shell: powershell
         run: |
-          Write-Host "Executing IRIS terminal..."
-          Write-Host "Using OSC: $env:OSC_PATH"
-          iris terminal $env:IRIS_INSTANCE -U $env:IRIS_NAMESPACE < $env:OSC_PATH
+          $osc = $env:OSC_PATH
+          if (-not (Test-Path $osc)) { Write-Error "OSC file not found: $osc"; exit 1 }
 
-          Write-Host "Deployment complete!"
+          Write-Host "Executing IRIS terminal with STDIN redirection..."
+          $psi = @{
+            FilePath               = "iris"
+            ArgumentList           = @("terminal", $env:IRIS_INSTANCE)
+            RedirectStandardInput  = $osc
+            NoNewWindow            = $true
+            Wait                   = $true
+          }
+          Start-Process @psi
+          Write-Host "Deployment complete."

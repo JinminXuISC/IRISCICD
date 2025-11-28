@@ -1,0 +1,10 @@
+Set sc = $SYSTEM.Security.Login("{USER}","{PASS}")
+If 'sc { write "LOGIN FAILED",!, Halt }
+
+Set $Namespace = "{NS}"
+
+// 3) load src
+Do $System.OBJ.LoadDir("{SRC}","ck",,1)
+
+// 4 quit
+Halt

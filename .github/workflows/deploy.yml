@@ -1,23 +1,50 @@
-name: IRIS-CICD
+name: IRIS-CICD (DEV auto deploy)
 
 on:
   push:
-    branches:
-      - dev
+    branches: [ dev ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted  # your Windows runner
+
+    # All IRIS configuration defined here
+    env:
+      IRIS_INSTANCE: DEV
+      IRIS_NAMESPACE: DEV
+      IRIS_USER: superuser
+      IRIS_PASS: sys
+      SRC_DIR: "C:\\github\\IRISCICD\\src"
+      OSC_FILE: "C:\\github\\IRISCICD\\loadfile.osc"
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Deploy via IRIS install.mac
-  shell: powershell
-  env:
-    IRIS_USER: _system  
-    IRIS_PASS: sys
-  run: |
-    @"
-# write a bash script to load the classfile under /src
+      - name: Replace placeholders in loadfile.osc
+        shell: powershell
+        run: |
+          Write-Host "Reading OSC template..."
+          $template = Get-Content $env:OSC_FILE -Raw
+
+          # Escape path for PowerShell regex
+          $srcEscaped = [regex]::Escape($env:SRC_DIR)
+
+          # Replace the template placeholders
+          $script = $template `
+            -replace '\{USER\}', $env:IRIS_USER `
+            -replace '\{PASS\}', $env:IRIS_PASS `
+            -replace '\{NS\}',   $env:IRIS_NAMESPACE `
+            -replace '\{SRC\}',  $srcEscaped
+
+          # overwrite the template
+          Write-Host "Writing final OSC file..."
+          Set-Content -Path $env:OSC_FILE -Value $script -Encoding ASCII
+
+      - name: Execute IRIS deployment
+        shell: powershell
+        run: |
+          Write-Host "Running IRIS deployment..."
+          iris terminal $env:IRIS_INSTANCE -U $env:IRIS_NAMESPACE < $env:OSC_FILE
+          Write-Host "Deployment complete!"
